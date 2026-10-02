@@ -6,7 +6,6 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from aiohttp import web
 
-# Токен берется из переменных окружения Render для безопасности
 API_TOKEN = os.getenv("BOT_TOKEN")
 
 router = Router()
@@ -17,17 +16,35 @@ dp = Dispatcher()
 @router.message(Command("start"))
 async def start_cmd(message: Message):
   await message.answer(
-      "🎬 Привет! Бот успешно запущен в облаке Render и готов к работе!"
+      "🎬 Привет! Напиши название фильма (например: *Мстители*), и я отправлю"
+      " тебе тестовое видео."
   )
 
 
-# Здесь будет ваша логика поиска фильмов и отправки видео
+# Обработка поиска фильма по тексту
 @router.message(F.text & ~F.text.startswith("/"))
-async def search_movie(message: Message):
-  await message.answer(f"🔍 Ищу фильм: {message.text}...")
+async def handle_movie_search(message: Message):
+  query = message.text.strip()
+  await message.answer(f"🔍 Ищу фильм «{query}»...")
+
+  # Имитация задержки поиска
+  await asyncio.sleep(1)
+
+  # Тестовая прямая ссылка на видеофайл для проверки отправки
+  test_video_url = "https://www.w3schools.com/html/mov_bbb.mp4"
+
+  await message.answer_video(
+      video=test_video_url,
+      caption=(
+          f"🎥 **Фильм по вашему запросу: {query.capitalize()}**\n\n📝 Описание:"
+          " Это тестовый видеофайл, который подтверждает, что бот успешно"
+          " отправляет видео из облака!\n\n🤖 Работает через Render 24/7."
+      ),
+      supports_streaming=True,
+  )
 
 
-# Простейший веб-сервер для Render, чтобы бот не «засыпал»
+# Веб-сервер для поддержки активности бота на Render
 async def handle(request):
   return web.Response(text="Bot is running!")
 
@@ -44,8 +61,8 @@ async def web_server():
 
 async def main():
   dp.include_router(router)
-
-  # Запускаем и веб-сервер, и поллинг бота одновременно
+  print("Бот запущен и готов к работе!")
+  await bot.delete_webhook(drop_pending_updates=True)
   await asyncio.gather(web_server(), dp.start_polling(bot))
 
 
